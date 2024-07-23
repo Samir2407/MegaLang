@@ -139,8 +139,9 @@ class Parser {
   }
 
   isAtEnd() {
-    return this.peek()[0] === "EOF" || this.current >= this.tokens.length;
+    return this.current >= this.tokens.length;
   }
+  
 
   peek() {
     return this.tokens[this.current];

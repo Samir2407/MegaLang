@@ -68,7 +68,6 @@ class Lexer {
       }
       this.readChar();
     }
-    this.tokens.push(["EOF", null, this.position]);
     return this.tokens;
   }
 

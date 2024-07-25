@@ -5,6 +5,8 @@ class Lexer {
     this.input = input;
     this.position = 0; // текущая позиция
     this.readPosition = 0; // позиция следующего символа
+    this.line = 1; // текущая строка
+    this.column = 0; // текущий столбец в строке
     this.ch = "";
     this.tokens = [];
     this.readChar();
@@ -19,11 +21,24 @@ class Lexer {
     }
     this.position = this.readPosition;
     this.readPosition += 1;
+
+    if (this.ch === "\n") {
+      this.line += 1;
+      this.column = -1;
+    } else {
+      this.column += 1;
+    }
   }
 
   backChar() {
     this.position -= 1;
     this.readPosition -= 1;
+    if (this.ch === "\n") {
+      this.line -= 1;
+    } else {
+      this.column -= 1;
+    }
+
     this.ch = this.input[this.position];
   }
 
@@ -61,7 +76,7 @@ class Lexer {
       this.skipWhitespace();
       if (this.skipComment()) {
         continue;
-      } // Пропускаем комментарии, после чего начинаем цикл с начала.
+      }
       let token = this.getToken();
       if (token) {
         this.tokens.push(token);
@@ -76,57 +91,58 @@ class Lexer {
     if (this.ch === null) {
       return null;
     }
+    let startColumn = this.column;
     if (this.isLetter(this.ch)) {
       const literal = this.readIdentifier();
       const type = this.lookupIdent(literal);
-      return [type, literal, this.position];
+      return [type, literal, [this.line, startColumn]];
     }
 
     if (this.isDigit(this.ch)) {
-      return ["NUMBER", this.readNumber(), this.position];
+      return ["NUMBER", this.readNumber(), [this.line, startColumn]];
     }
 
     if (this.ch === `"` || this.ch === `'`) {
-      return ["STRING", this.readString(this.ch), this.position];
+      return ["STRING", this.readString(this.ch), [this.line, startColumn]];
     }
 
     switch (this.ch) {
       case "=":
-        return ["ASSIGN", "=", this.position];
+        return ["ASSIGN", "=", [this.line, startColumn]];
       case ":":
-        return ["COLON", ":", this.position];
+        return ["COLON", ":", [this.line, startColumn]];
       case ";":
-        return ["SEMICOLON", ";", this.position];
+        return ["SEMICOLON", ";", [this.line, startColumn]];
       case "(":
-        return ["LPAREN", "(", this.position];
+        return ["LPAREN", "(", [this.line, startColumn]];
       case ")":
-        return ["RPAREN", ")", this.position];
+        return ["RPAREN", ")", [this.line, startColumn]];
       case "{":
-        return ["LBRACE", "{", this.position];
+        return ["LBRACE", "{", [this.line, startColumn]];
       case "}":
-        return ["RBRACE", "}", this.position];
+        return ["RBRACE", "}", [this.line, startColumn]];
       case "[":
-        return ["LBRACKET", "[", this.position];
+        return ["LBRACKET", "[", [this.line, startColumn]];
       case "]":
-        return ["RBRACKET", "]", this.position];
+        return ["RBRACKET", "]", [this.line, startColumn]];
       case ",":
-        return ["COMMA", ",", this.position];
+        return ["COMMA", ",", [this.line, startColumn]];
       case ".":
-        return ["DOT", ".", this.position];
+        return ["DOT", ".", [this.line, startColumn]];
       case "+":
-        return ["PLUS", "+", this.position];
+        return ["PLUS", "+", [this.line, startColumn]];
       case "-":
-        return ["MINUS", "-", this.position];
+        return ["MINUS", "-", [this.line, startColumn]];
       case "*":
-        return ["ASTERISK", "*", this.position];
+        return ["ASTERISK", "*", [this.line, startColumn]];
       case "/":
-        return ["SLASH", "/", this.position];
+        return ["SLASH", "/", [this.line, startColumn]];
       case "!":
-        return ["BANG", "!", this.position];
+        return ["BANG", "!", [this.line, startColumn]];
       case "<":
-        return ["LT", "<", this.position];
+        return ["LT", "<", [this.line, startColumn]];
       case ">":
-        return ["GT", ">", this.position];
+        return ["GT", ">", [this.line, startColumn]];
       default:
         console.log(
           "Unexpected character: " +
@@ -134,7 +150,7 @@ class Lexer {
             ": " +
             this.input.slice(this.position - 10, this.position + 10)
         );
-        return ["ILLEGAL", this.ch, this.position];
+        return ["ILLEGAL", this.ch, [this.line, startColumn]];
     }
   }
 
@@ -146,8 +162,7 @@ class Lexer {
     }
     let result = this.input.slice(start, this.position);
     if (!this.isLetter(this.ch)) {
-      this.position -= 1;
-      this.readPosition -= 1;
+      this.backChar();
     }
     return result;
   }
@@ -160,8 +175,7 @@ class Lexer {
     }
     let result = this.input.slice(start, this.position);
     if (!this.isDigit(this.ch)) {
-      this.position -= 1;
-      this.readPosition -= 1;
+      this.backChar();
     }
     return result;
   }

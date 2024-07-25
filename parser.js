@@ -49,8 +49,6 @@ class LoopStatement {
   }
 }
 
-// Другие классы для while, repeat, for и так далее
-
 class Parser {
   constructor(tokens) {
     this.tokens = tokens;
